@@ -15,7 +15,7 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from datasets.dataset_synapse_miss import Synapse_dataset
+from datasets.dataset_synapse_aug import Synapse_dataset
 from utils import test_single_volume
 from networks.vision_transformer import SwinUnet as ViT_seg
 from trainer import trainer_synapse
@@ -23,21 +23,21 @@ from config import get_config
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--volume_path', type=str,
-                    default='/public/home/jd_fly/code/Datasets/Synapse', help='root dir for validation volume data')  # for acdc volume_path=root_dir
+                    default='/xx/Datasets/Synapse', help='root dir for validation volume data')  # for acdc volume_path=root_dir
 parser.add_argument('--dataset', type=str,
                     default='Synapse', help='experiment_name')
 parser.add_argument('--num_classes', type=int,
                     default=9, help='output channel of network')
 parser.add_argument('--list_dir', type=str,
                     default='./lists/lists_Synapse', help='list dir')
-parser.add_argument('--output_dir', type=str, default='/public/home/jd_fly/code/RSwin-Unet-main/output/ConvSkipTU_Aug01_e300',help='output dir')   
+parser.add_argument('--output_dir', type=str, default='input your output dir path',help='output dir')   
 parser.add_argument('--max_iterations', type=int,default=30000, help='maximum epoch number to train')
 parser.add_argument('--max_epochs', type=int, default=250, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int, default=24,
                     help='batch_size per gpu')
 parser.add_argument('--img_size', type=int, default=224, help='input patch size of network input')
 parser.add_argument('--is_savenii', action="store_true", help='whether to save results during inference')
-parser.add_argument('--test_save_dir', type=str, default='./test_predictions/ConvSkipTU_Aug01_e300', help='saving prediction as nii!')
+parser.add_argument('--test_save_dir', type=str, default='./test_predictions/', help='saving prediction as nii!')
 parser.add_argument('--deterministic', type=int,  default=1, help='whether use deterministic training')
 parser.add_argument('--base_lr', type=float,  default=0.01, help='segmentation network learning rate')
 parser.add_argument('--seed', type=int, default=1234, help='random seed')
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         'Synapse': {
             'Dataset': Synapse_dataset,
             'volume_path': args.volume_path,
-            'list_dir': '/public/home/jd_fly/code/Datasets/Synapse/lists_Synapse',
+            'list_dir': '/xx/Synapse/lists_Synapse',
             'num_classes': 9,
             'z_spacing': 1,
         },
