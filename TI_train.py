@@ -11,14 +11,14 @@ from config import get_config
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str,
-                    default='../data/Synapse/train_npz', help='root dir for data')
+                    default='/xx/Dataset/Synapse', help='root dir for data')
 parser.add_argument('--dataset', type=str,
                     default='Synapse', help='experiment_name')
 parser.add_argument('--list_dir', type=str,
                     default='./lists/lists_Synapse', help='list dir')
 parser.add_argument('--num_classes', type=int,
                     default=9, help='output channel of network')
-parser.add_argument('--output_dir', type=str, help='output dir')                   
+parser.add_argument('--output_dir', type=str, default='/xx/xx/xx', help='output dir')                   
 parser.add_argument('--max_iterations', type=int,
                     default=30000, help='maximum epoch number to train')
 parser.add_argument('--max_epochs', type=int,
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     dataset_config = {
         'Synapse': {
             'root_path': args.root_path,
-            'list_dir': './lists/lists_Synapse',
+            'list_dir': '/xx/Dataset/Synapse/lists_Synapse',
             'num_classes': 9,
         },
     }
