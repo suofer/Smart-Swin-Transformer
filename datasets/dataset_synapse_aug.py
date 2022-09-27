@@ -7,7 +7,7 @@ from scipy import ndimage
 from scipy.ndimage.interpolation import zoom
 from torch.utils.data import Dataset
 import imgaug as ia
-import imgaug.augmenters as iaa  # 导入iaa
+import imgaug.augmenters as iaa 
 
 
 def mask_to_onehot(mask, ):
@@ -80,20 +80,8 @@ class Synapse_dataset(Dataset):
         self.sample_list = open(os.path.join(list_dir, self.split+'.txt')).readlines()
         self.data_dir = base_dir
         self.img_size = img_size
-        # sigma in GaussianBlur
+        # augmentations
         self.img_aug = iaa.SomeOf((0,4),[
-            iaa.Flipud(0.5, name="Flipud"), # 上下翻转
-            iaa.Fliplr(0.5, name="Fliplr"), # 水平镜面翻转
-            iaa.AdditiveGaussianNoise(scale=0.005 * 255),
-            # changed place
-            iaa.GaussianBlur(sigma=(0, 3.0)), # 高斯模糊
-            iaa.LinearContrast((0.5, 1.5), per_channel=0.5),
-            iaa.Affine(scale={"x": (0.5, 2), "y": (0.5, 2)}), # 仿射变换之缩放
-            iaa.Affine(rotate=(-40, 40)), # 仿射变换之旋转
-            iaa.Affine(shear=(-16, 16)), # 仿射变换之错切
-            iaa.PiecewiseAffine(scale=(0.008, 0.03)), # 移动网格周围像素，导致局部扭曲
-            iaa.Affine(translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)}), # 仿射变换之平移
-            # additions
             iaa.OneOf([
                     iaa.Dropout((0.01, 0.1), per_channel=0.5),
                     iaa.CoarseDropout(
@@ -101,6 +89,17 @@ class Synapse_dataset(Dataset):
                         per_channel=0.2
                     ),
                 ]),
+            iaa.GaussianBlur(sigma=(0, 3.0)), 
+            iaa.LinearContrast((0.5, 1.5), per_channel=0.5),
+            iaa.Affine(scale={"x": (0.5, 2), "y": (0.5, 2)}), 
+            iaa.Affine(rotate=(-40, 40)), 
+            iaa.Affine(shear=(-16, 16)),
+            iaa.PiecewiseAffine(scale=(0.008, 0.03)), 
+            iaa.Affine(translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)}),
+            iaa.Flipud(0.5, name="Flipud"), 
+            iaa.Fliplr(0.5, name="Fliplr"),
+            iaa.AdditiveGaussianNoise(scale=0.005 * 255),
+            
             # iaa.Sharpen(alpha=(0.8, 1.0), lightness=(0.9, 2.0)),
             # iaa.ContrastNormalization((0.9, 1.5)),
             # iaa.Add(value=(-20, 20), per_channel=True),
