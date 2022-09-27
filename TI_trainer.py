@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils import DiceLoss,TI_Loss
 from torchvision import transforms
+from utils import test_single_volume
 from torch.nn import functional as F
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -44,15 +45,19 @@ def trainer_synapse(args, model, snapshot_path):
     def worker_init_fn(worker_id):
         random.seed(args.seed + worker_id)
 
-    trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True,
+    trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True, num_workers=12, pin_memory=True,
                              worker_init_fn=worker_init_fn)
     if args.n_gpu > 1:
         model = nn.DataParallel(model)
     model.train()
     ce_loss = CrossEntropyLoss()
 
-    ti_loss = TI_Loss(dim=2, connectivity=4, inclusion=[], exclusion=[[0,6],[1,6],[2,6],[3,6],[4,6],[5,6],[7,6],[8,6]])
-    weight_ti = nn.Parameter(torch.tensor([0.1], device=device))
+    ti_loss = TI_Loss(dim=2, connectivity=4, inclusion=[], exclusion=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]])
+    ti_loss_weight = 1e-4
+    #ti_loss_func = TI_Loss(dim=2, connectivity=4, inclusion=[[1,2]], exclusion=[[2,3],[3,4]])
+    #ti_loss_value = ti_loss_func(x, y) if ti_loss_weight != 0 else 0
+    #ti_loss_value = ti_loss_weight * ti_loss_value
+    #weight_ti = nn.Parameter(torch.tensor([0.1], device=device))
 
     dice_loss = DiceLoss(num_classes)
     optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
@@ -72,8 +77,10 @@ def trainer_synapse(args, model, snapshot_path):
             # outputs = F.interpolate(outputs, size=label_batch.shape[1:], mode='bilinear', align_corners=False)
             loss_ce = ce_loss(outputs, label_batch[:].long())
             loss_dice = dice_loss(outputs, label_batch, softmax=True)
-            loss_ti = ti_loss(outputs, label_batch)
-            loss = 0.4 * loss_ce + 0.6 * loss_dice + weight_ti * loss_ti 
+            loss_ti_value = ti_loss(outputs, label_batch) if ti_loss_weight != 0 else 0
+            #loss_ti = ti_loss_weight * loss_ti_value
+            #loss = 0.4 * loss_ce + 0.6 * loss_dice + weight_ti * loss_ti 
+            loss = 0.8 * loss_ce + 1.0 * loss_dice +  ti_loss_weight * loss_ti_value
             # print("loss-----------", loss)
             optimizer.zero_grad()
             loss.backward()
