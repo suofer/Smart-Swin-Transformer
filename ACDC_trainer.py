@@ -14,11 +14,10 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils import DiceLoss
 from torchvision import transforms
-from utils import test_single_volume
 from torch.nn import functional as F
 
 def trainer_synapse(args, model, snapshot_path):
-    from datasets.dataset_synapse_aug01 import Synapse_dataset
+    from datasets.dataset_synapse_aug import Synapse_dataset
     logging.basicConfig(filename=snapshot_path + "/log.txt", level=logging.INFO,
                         format='[%(asctime)s.%(msecs)03d] %(message)s', datefmt='%H:%M:%S')
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
