@@ -83,12 +83,6 @@ class WindowAttention(nn.Module):
         self.relative_position_bias_table = nn.Parameter(
             torch.zeros((2 * window_size[0] - 1) * (2 * window_size[1] - 1), num_heads))  # 2*Wh-1 * 2*Ww-1, nH
         
-        # value's relative position
-        # self.relative_position_bias_v = nn.Parameter(torch.zeros(1, num_heads, window_size[0] * window_size[1], dim // num_heads))
-        # self.relative_position_bias_v_reverse = nn.Parameter(torch.zeros(1, num_heads, window_size[0] * window_size[1], dim // num_heads))
-        # self.weight_bias_v = nn.Parameter(torch.tensor([1.0]))
-        # self.weight_bias_v_smart = nn.Parameter(torch.tensor([1.0]))
-
         # get pair-wise relative position index for each token inside the window
         coords_h = torch.arange(self.window_size[0])
         coords_w = torch.arange(self.window_size[1])
@@ -127,10 +121,6 @@ class WindowAttention(nn.Module):
         relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
         attn = attn + relative_position_bias.unsqueeze(0)
-
-        # add a relativa position information for the values
-        # v = v + self.relative_position_bias_v
-        # v_reverse = v + self.relative_position_bias_v_reverse
 
         if mask is not None:
             nW = mask.shape[0]
