@@ -207,10 +207,16 @@ def test_single_volume(image, label, net, classes, patch_size=[256, 256], test_s
             x, y = slice.shape[0], slice.shape[1]
             if x != patch_size[0] or y != patch_size[1]:
                 slice = zoom(slice, (patch_size[0] / x, patch_size[1] / y), order=3)  # previous using 0
-            input = torch.from_numpy(slice).unsqueeze(0).unsqueeze(0).float().cuda()
+            x_transforms = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize([0.5], [0.5])
+            ])
+            input = x_transforms(slice).unsqueeze(0).float().cuda()
+
             net.eval()
             with torch.no_grad():
                 outputs = net(input)
+                # outputs = F.interpolate(outputs, size=slice.shape[:], mode='bilinear', align_corners=False)
                 out = torch.argmax(torch.softmax(outputs, dim=1), dim=1).squeeze(0)
                 out = out.cpu().detach().numpy()
                 if x != patch_size[0] or y != patch_size[1]:
