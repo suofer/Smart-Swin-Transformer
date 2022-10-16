@@ -6,23 +6,23 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from networks.vision_transformer import SwinUnet as ViT_seg
-from TI_trainer import trainer_synapse
+from trainer import trainer_synapse
 from config import get_config
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str,
-                    default='/xx/Dataset/Synapse', help='root dir for data')
+                    default='/public/home/xx/data/Synapse', help='root dir for data')
 parser.add_argument('--dataset', type=str,
                     default='Synapse', help='experiment_name')
 parser.add_argument('--list_dir', type=str,
                     default='./lists/lists_Synapse', help='list dir')
 parser.add_argument('--num_classes', type=int,
                     default=9, help='output channel of network')
-parser.add_argument('--output_dir', type=str, default='/xx/xx/xx', help='output dir')                   
+parser.add_argument('--output_dir', type=str, default='/public/home/xx', help='output dir')                       
 parser.add_argument('--max_iterations', type=int,
                     default=30000, help='maximum epoch number to train')
 parser.add_argument('--max_epochs', type=int,
-                    default=150, help='maximum epoch number to train')
+                    default=300, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int,
                     default=24, help='batch_size per gpu')
 parser.add_argument('--n_gpu', type=int, default=1, help='total gpu')
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     dataset_config = {
         'Synapse': {
             'root_path': args.root_path,
-            'list_dir': '/xx/Dataset/Synapse/lists_Synapse',
+            'list_dir': './lists/lists_Synapse',
             'num_classes': 9,
         },
     }
