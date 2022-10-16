@@ -12,14 +12,14 @@ from tensorboardX import SummaryWriter
 from torch.nn.modules.loss import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from utils import DiceLoss,TI_Loss
+from rmi import RMILoss
+from utils import DiceLoss,FocalLoss
 from torchvision import transforms
 from utils import test_single_volume
 from torch.nn import functional as F
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 def trainer_synapse(args, model, snapshot_path):
-    from datasets.dataset_synapse_aug import Synapse_dataset
+    from datasets.dataset_synapse_aug01 import Synapse_dataset
     logging.basicConfig(filename=snapshot_path + "/log.txt", level=logging.INFO,
                         format='[%(asctime)s.%(msecs)03d] %(message)s', datefmt='%H:%M:%S')
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -45,21 +45,14 @@ def trainer_synapse(args, model, snapshot_path):
     def worker_init_fn(worker_id):
         random.seed(args.seed + worker_id)
 
-    trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True, num_workers=12, pin_memory=True,
+    trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True,
                              worker_init_fn=worker_init_fn)
     if args.n_gpu > 1:
         model = nn.DataParallel(model)
     model.train()
-    ce_loss = CrossEntropyLoss()
-
-    ti_loss = TI_Loss(dim=2, connectivity=4, inclusion=[], exclusion=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]])
-    ti_loss_weight = 1e-4
-    #ti_loss_func = TI_Loss(dim=2, connectivity=4, inclusion=[[1,2]], exclusion=[[2,3],[3,4]])
-    #ti_loss_value = ti_loss_func(x, y) if ti_loss_weight != 0 else 0
-    #ti_loss_value = ti_loss_weight * ti_loss_value
-    #weight_ti = nn.Parameter(torch.tensor([0.1], device=device))
-
+    #ce_loss = CrossEntropyLoss()
     dice_loss = DiceLoss(num_classes)
+    focal_loss = FocalLoss(gamma=2)
     optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
     writer = SummaryWriter(snapshot_path + '/log')
     iter_num = 0
@@ -74,14 +67,10 @@ def trainer_synapse(args, model, snapshot_path):
             # print("data shape---------", image_batch.shape, label_batch.shape)
             image_batch, label_batch = image_batch.cuda(), label_batch.squeeze(1).cuda()
             outputs = model(image_batch)
-            # outputs = F.interpolate(outputs, size=label_batch.shape[1:], mode='bilinear', align_corners=False)
-            loss_ce = ce_loss(outputs, label_batch[:].long())
             loss_dice = dice_loss(outputs, label_batch, softmax=True)
-            loss_ti_value = ti_loss(outputs, label_batch) if ti_loss_weight != 0 else 0
-            #loss_ti = ti_loss_weight * loss_ti_value
-            #loss = 0.4 * loss_ce + 0.6 * loss_dice + weight_ti * loss_ti 
-            loss = 0.8 * loss_ce + 1.0 * loss_dice +  ti_loss_weight * loss_ti_value
-            # print("loss-----------", loss)
+            loss_focal = focal_loss(outputs, label_batch[:].long())
+            loss = 0.6 * loss_dice + 0.4 * loss_focal
+            print("loss-----------", loss)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -92,9 +81,9 @@ def trainer_synapse(args, model, snapshot_path):
             iter_num = iter_num + 1
             writer.add_scalar('info/lr', lr_, iter_num)
             writer.add_scalar('info/total_loss', loss, iter_num)
-            writer.add_scalar('info/loss_ce', loss_ce, iter_num)
+            writer.add_scalar('info/loss_dice', loss_dice, iter_num)
 
-            logging.info('iteration %d : loss : %f, loss_ce: %f' % (iter_num, loss.item(), loss_ce.item()))
+            logging.info('iteration %d : loss : %f, loss_dice: %f' % (iter_num, loss.item(), loss_dice.item()))
 
             if iter_num % 20 == 0:
                 image = image_batch[1, 0:1, :, :]
