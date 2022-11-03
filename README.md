@@ -1,4 +1,4 @@
-# Smart-Efficient-Transformer
+# Smart-Swin-Transformer
  
 # Datasets
 [Synapse](https://www.synapse.org/#!Synapse:syn3193805/wiki/217789) <br />
